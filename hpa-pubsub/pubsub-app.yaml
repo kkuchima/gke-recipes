@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pubsub
+spec:
+  selector:
+    matchLabels:
+      app: pubsub
+  template:
+    metadata:
+      labels:
+        app: pubsub
+    spec:
+      containers:
+      - name: subscriber
+        image: us-docker.pkg.dev/google-samples/containers/gke/pubsub-sample:v1
+      serviceAccountName: ksa-pubsub #update
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+        cloud.google.com/gke-nodepool: pool01 #update
