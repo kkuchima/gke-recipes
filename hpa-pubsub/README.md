@@ -46,7 +46,6 @@ kubectl apply -f pubsub-app.yaml
 ```
 
 # Pub/Sub メトリクスベースの HPA
-
 ```bash
 # GKE 側で Workload Identity が有効になっている前提
 # 環境変数の設定
