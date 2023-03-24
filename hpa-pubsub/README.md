@@ -63,7 +63,7 @@ gcloud iam service-accounts create ${GSA_NAME}
 # GSA に必要なロールを割り当て
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member "serviceAccount:${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-    --role "roles/viewer"
+    --role "roles/monitoring.viewer"
 
 # GSA と KSA 間でのバインディング
 gcloud iam service-accounts add-iam-policy-binding ${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
