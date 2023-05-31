@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gcs-fuse-csi-example-ephemeral
+  namespace: default
+  annotations:
+    gke-gcsfuse/volumes: "true" # required
+#    gke-gcsfuse/cpu-limit: 500m # optional
+#    gke-gcsfuse/memory-limit: 100Mi # optional
+#    gke-gcsfuse/ephemeral-storage-limit: 50Gi # optional
+spec:
+#  terminationGracePeriodSeconds: 60 # optional, 30 by default
+#  securityContext: # optional, if Pod does not use the root user
+#    runAsUser: 1001
+#    runAsGroup: 2002
+#    fsGroup: 3003
+  containers:
+  - image: nginx
+    name: nginx
+    volumeMounts:
+    - name: gcs-fuse-csi-ephemeral
+      mountPath: /data
+      readOnly: true # optional, if this specific volume mount is read-only
+  serviceAccountName: ksa-gcs
+  volumes:
+  - name: gcs-fuse-csi-ephemeral
+    csi:
+      driver: gcsfuse.csi.storage.gke.io
+      readOnly: true # optional, if all the volume mounts are read-only
+      volumeAttributes:
+        bucketName: kkuchima-sandbox-detectron2-sample
+#        mountOptions: "uid=1001,gid=3003,debug_fuse" # optional

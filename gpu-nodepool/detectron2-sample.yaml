@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: detectron2-sample
+  namespace: default
+  annotations:
+    gke-gcsfuse/volumes: "true" # required
+#    gke-gcsfuse/cpu-limit: 1000m # optional
+    gke-gcsfuse/memory-limit: 500Mi # optional
+#    gke-gcsfuse/ephemeral-storage-limit: 50Gi # optional
+spec:
+#  terminationGracePeriodSeconds: 60 # optional, 30 by default
+#  securityContext: # optional, if Pod does not use the root user
+#    runAsUser: 1001
+#    runAsGroup: 2002
+#    fsGroup: 3003
+  restartPolicy: OnFailure
+  containers:
+  - image: us-central1-docker.pkg.dev/kkuchima-sandbox/pytorch/detectron2-sample:0.3 # Replace
+    name: detectron2-sample
+    env:
+      - name: "DETECTRON2_DATASETS"
+        value: "/data"
+    command:
+      - "tools/train_net.py"
+      - "--config-file=configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml"
+      - "--num-gpus=4"
+    args: ["SOLVER.IMS_PER_BATCH", "32", "SOLVER.BASE_LR", "0.0025", "DATALOADER.NUM_WORKERS", "16", "SOLVER.MAX_ITER", "10000"]
+    resources:
+      requests:
+        cpu: "16"
+        memory: "128Gi"
+      limits:
+        cpu: "16"
+        memory: "128Gi"
+        nvidia.com/gpu: 4
+    volumeMounts:
+    - name: gcs-fuse-csi-ephemeral
+      mountPath: /data
+      readOnly: true # optional, if this specific volume mount is read-only
+    - mountPath: /dev/shm
+      name: dshm
+  serviceAccountName: ksa-gcs
+  volumes:
+  - name: dshm
+    emptyDir:
+      medium: Memory
+  - name: gcs-fuse-csi-ephemeral
+    csi:
+      driver: gcsfuse.csi.storage.gke.io
+      readOnly: true # optional, if all the volume mounts are read-only
+      volumeAttributes:
+        bucketName: kkuchima-sandbox-detectron2-sample
+        mountOptions: "implicit-dirs" # optional
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-tesla-v100

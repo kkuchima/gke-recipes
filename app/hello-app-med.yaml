@@ -1,26 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: helloweb
+  name: helloweb-med
   labels:
-    app: hello
+    app: hello-med
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: hello
+      app: hello-med
       tier: web
   template:
     metadata:
       labels:
-        app: hello
+        app: hello-med
         tier: web
     spec:
       containers:
-      - name: hello-app
+      - name: hello-app-med
         image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
         ports:
         - containerPort: 8080
         resources:
           requests:
-            cpu: 200m
+            cpu: 800m
+            memory: 2Gi
