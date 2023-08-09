@@ -9,12 +9,10 @@ spec:
   selector:
     matchLabels:
       app: hello
-      tier: web
   template:
     metadata:
       labels:
         app: hello
-        tier: web
     spec:
       containers:
       - name: hello-app
