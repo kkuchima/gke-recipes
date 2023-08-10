@@ -7,5 +7,4 @@ gcloud deploy releases create rel-'$DATE'-'$TIME' \
   --project=${PROJECT_ID} \
   --region=${REGION} \
   --delivery-pipeline=sample-pipeline
-
 ```
