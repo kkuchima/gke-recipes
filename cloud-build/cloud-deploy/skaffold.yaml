@@ -1,22 +1,13 @@
 apiVersion: skaffold/v2beta16
 kind: Config
-deploy:
-  kubectl:
-    manifests:
-      - manifests/k8s-*
 profiles:
 - name: dev
   deploy:
     kustomize:
       paths:
-        - leeroy-app-profiles/kubernetes/test
-- name: stg
-  deploy:
-    kustomize:
-      paths:
-        - leeroy-app-profiles/kubernetes/staging
+        - overlays/dev
 - name: prod
   deploy:
     kustomize:
       paths:
-        - leeroy-app-profiles/kubernetes/prod
+        - overlays/prod

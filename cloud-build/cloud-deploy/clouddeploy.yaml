@@ -1,14 +1,14 @@
 apiVersion: deploy.cloud.google.com/v1
 kind: DeliveryPipeline
 metadata:
-  name: my-gke-demo-app-1
+  name: sample-pipeline
 description: main application pipeline
 serialPipeline:
   stages:
   - targetId: dev
-    profiles: []
-  - targetId: stg
-    profiles: []
+    profiles: [dev]
+  - targetId: prod
+    profiles: [prod]
 
 ---
 apiVersion: deploy.cloud.google.com/v1
@@ -24,8 +24,9 @@ gke:
 apiVersion: deploy.cloud.google.com/v1
 kind: Target
 metadata:
-  name: stg
-description: staging cluster
+  name: prod
+description: production cluster
 gke:
   cluster: projects/kkuchima-sandbox/locations/asia-northeast1/clusters/cluster-1
   # gcloud container clusters describe cluster-1 --region asia-northeast1
+requireApproval: true

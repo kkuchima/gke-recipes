@@ -1,0 +1,23 @@
+steps:
+  - id: 'build'
+    name: gcr.io/k8s-skaffold/pack
+    entrypoint: pack
+    args:
+    - build
+    - 'asia-northeast1-docker.pkg.dev/kkuchima-sandbox/my-repo/my-app:v1'
+    - '--builder=gcr.io/buildpacks/builder:latest'
+    - '--publish'
+
+  - id: 'trivy'
+    name: 'aquasec/trivy'
+    entrypoint: '/bin/sh'
+    args:
+      - '-c'
+      - | 
+        trivy image --exit-code 1 --severity CRITICAL --quiet asia-northeast1-docker.pkg.dev/kkuchima-sandbox/my-repo/my-app:v1
+
+  - id: 'deploy'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: ['run', 'deploy', 'my-app', '--region=asia-northeast1',
+      '--image=asia-northeast1-docker.pkg.dev/kkuchima-sandbox/my-repo/my-app:v1']
