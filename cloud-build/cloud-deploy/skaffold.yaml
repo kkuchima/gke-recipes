@@ -8,14 +8,13 @@ profiles:
         - overlays/dev
   customActions:
   - name: predeploy-action
-    containers:
-    - name: predeploy-echo
-      image: ubuntu
-      command: ["/bin/sh"]
-      args: ["-c", 'echo "this is a predeploy action"' ]
     executionMode:
-      kubernetesCluster: {}
-
+      kubernetesCluster: 
+        jobManifestPath: sample-job.yaml
+    containers:
+    - name: pi
+      image: perl:5.34.0
+      command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(200)"]
 - name: prod
   manifests:
     kustomize:
