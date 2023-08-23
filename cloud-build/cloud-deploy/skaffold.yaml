@@ -1,13 +1,23 @@
-apiVersion: skaffold/v2beta16
+apiVersion: skaffold/v4beta5
 kind: Config
 profiles:
 - name: dev
-  deploy:
+  manifests:
     kustomize:
       paths:
         - overlays/dev
+  customActions:
+  - name: predeploy-action
+    containers:
+    - name: predeploy-echo
+      image: ubuntu
+      command: ["/bin/sh"]
+      args: ["-c", 'echo "this is a predeploy action"' ]
+    executionMode:
+      kubernetesCluster: {}
+
 - name: prod
-  deploy:
+  manifests:
     kustomize:
       paths:
         - overlays/prod

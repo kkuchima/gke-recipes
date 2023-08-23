@@ -7,6 +7,10 @@ serialPipeline:
   stages:
   - targetId: dev
     profiles: [dev]
+    strategy:
+      standard:
+        predeploy:
+          actions: ["predeploy-action"]
   - targetId: prod
     profiles: [prod]
 
