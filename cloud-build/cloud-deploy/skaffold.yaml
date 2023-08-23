@@ -1,13 +1,22 @@
-apiVersion: skaffold/v2beta16
+apiVersion: skaffold/v4beta5
 kind: Config
 profiles:
 - name: dev
-  deploy:
+  manifests:
     kustomize:
       paths:
         - overlays/dev
+  customActions:
+  - name: predeploy-action
+    executionMode:
+      kubernetesCluster: 
+        jobManifestPath: sample-job.yaml
+    containers:
+    - name: pi
+      image: perl:5.34.0
+      command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(200)"]
 - name: prod
-  deploy:
+  manifests:
     kustomize:
       paths:
         - overlays/prod
