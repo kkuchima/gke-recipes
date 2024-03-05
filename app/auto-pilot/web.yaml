@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      pod: nginx-pod
+  template:
+    metadata:
+      labels:
+        pod: nginx-pod
+    spec:
+      tolerations:
+      - key: group
+        operator: Equal
+        value: "servers"
+        effect: NoSchedule
+      nodeSelector:
+        group: "servers"
+      containers:
+      - name: web-server
+        image: nginx
