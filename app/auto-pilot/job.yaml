@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-job
+spec:
+  completions: 5
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 120
+  template:
+    metadata:
+      labels:
+        pod: pi-pod
+    spec:
+      restartPolicy: Never
+      tolerations:
+      - key: group
+        operator: Equal
+        value: "jobs"
+        effect: NoSchedule
+      nodeSelector:
+        group: "jobs"
+      containers:
+      - name: pi
+        image: perl
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
