@@ -31,7 +31,7 @@ kubectl apply -f sc-filestore.yaml
 kubectl apply -f filestore-example-deployment.yaml
 ```
 
-```yaml
+```yaml:sc-filestore.yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -44,7 +44,7 @@ parameters:
   network: default
 ```
 
-```yaml
+```yaml:filestore-example-deployment.yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
