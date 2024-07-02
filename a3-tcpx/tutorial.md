@@ -188,6 +188,7 @@ gcloud container clusters create ${CLUSTER_NAME} \
   --no-enable-autoupgrade \
   --enable-image-streaming \
   --workload-pool=${PROJECT_ID}.svc.id.goog \
+    --network=${PRIMARY_VPC} --subnetwork=${PRIMARY_SUBNET} \
   --addons=GcpFilestoreCsiDriver,GcsFuseCsiDriver
 ```
 
