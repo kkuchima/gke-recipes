@@ -1,16 +1,16 @@
 # **A3 VM on GKE ハンズオン-**
-本ハンズオンでは A3 VM on GKE の初回セットアップ方法を説明します。
+
+本ハンズオンでは A3 VM on GKE の初回セットアップ方法について説明します。  
 
 ## **ハンズオン実施内容**
-GKE のノードとして A3 VM を利用する手順は以下のとおりです。  
+GKE のノードとして A3 VM を利用する手順は以下の通りです。  
 
-1. (Optional) A3 VM の CUD 購入、および予約の作成
-2. (Optional) CUD の共有設定を有効化
-3. VPC の作成
-4. GKE クラスタの作成
-5. テスト ワークロードの実行
+1. VPC の作成
+2. GKE クラスタの作成
+3. テスト ワークロードの実行
 
-手順 1 と 2 は Optional となるため本ハンズオンでは設定手順の説明を割愛します。  
+必要に応じて、本手順実施前に A3 VM の CUD 購入、および予約の作成や CUD の共有設定を有効化してください。  
+本ハンズオンでは CUD や予約関連の設定手順の説明は割愛します。  
 
 ## Google Cloud プロジェクトの設定、確認
 
@@ -112,8 +112,6 @@ export CIDR=192.168
 export SECONDARY_FW=fw-data-net-internal
 ```
 
-### **1-2. プライマリ VPC の作成**
-
 今回のハンズオン用 VPC を作成します。トラフィック最適化のためジャンボフレームを有効化します。  
 
 ```bash
@@ -134,8 +132,9 @@ gcloud compute networks subnets create ${PRIMARY_SUBNET} \
 ### **1-3. セカンダリ VPC の作成**
 
 GPU 間通信で利用するための VPC とサブネット、ファイアウォールルールを作成します。  
+以下のコマンドをコピーし、Cloud Shell に貼り付けてください。  
 
-```bash
+```text
 for N in $(seq 1 4); do
 gcloud compute networks create ${SECONDARY_VPC}-$N \
     --subnet-mode=custom \
@@ -183,7 +182,7 @@ Multi Networking が有効な GKE クラスタを作成します。
 
 ```bash
 gcloud container clusters create ${CLUSTER_NAME} \
-  --location=us-central1-a --cluster-version=${CLUSTER_VER} \
+  --location=${ZONE} --cluster-version=${CLUSTER_VER} \
   --enable-dataplane-v2 --enable-ip-alias \
   --enable-multi-networking \
   --no-enable-autoupgrade \
@@ -196,7 +195,7 @@ gcloud container clusters create ${CLUSTER_NAME} \
 
 GKE クラスタで Multi-NIC を構成するために以下コマンドを実行します。  
 
-```bash
+```text
 kubectl apply -f - <<EOF
 apiVersion: networking.gke.io/v1
 kind: Network
@@ -299,11 +298,17 @@ gcloud container node-pools create ${NODEPOOL_NAME} \
     --no-enable-autoupgrade
 ```
 
-Node Pool プロビジョニング完了後、`kubectl describe node` コマンドで Node に GPU が割り当てられていることを確認します。  
+Node Pool プロビジョニング完了後、Node に GPU が割り当てられていることを確認します。  
+
+以下のコマンドを実行し、A3 Node の名前を確認します。  
+
+```bash
+kubectl get nodes
+```
+
+`kubectl describe node` コマンドを実行し、GPU の割り当て状況を確認します。  
 
 ```text
-kubectl get nodes
-
 kubectl describe node <Node Name>
 
 // 出力例
@@ -377,14 +382,14 @@ kubectl exec --stdin --tty --container=nccl-test nccl-test-host-1 -- /configs/al
 
 ## **(Optional) Filestore PV の作成**
 
-GKE から低遅延でデータにアクセスさせたい場合、データの格納場所として Filestore が 1 つの選択肢となります。  
+GKE から低遅延でデータにアクセスさせたい場合、データの格納場所として Filestore を利用することもできます。  
 本セクションでは、Filestore CSI を利用した PV の作成を行います。  
 
 ### **1. Storage Class の作成**
 
 GKE の Primary VPC 上に Filestore インスタンスをプロビジョニングするために、以下の Storage Class をデプロイします。  
 
-```bash
+```text
 kubectl apply -f - <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -394,7 +399,7 @@ provisioner: filestore.csi.storage.gke.io
 volumeBindingMode: Immediate
 allowVolumeExpansion: true
 parameters:
-  tier: ENTERPRISE
+  tier: BASIC_SSD
   network: ${PRIMARY_VPC}
 EOF
 ```
@@ -404,7 +409,12 @@ EOF
 Filstore PV を要求する Pod をデプロイします。  
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f filestore-example-deployment.yaml
+```
+
+以下の内容のマニフェストを適用しています。  
+
+```text
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -443,5 +453,4 @@ spec:
   resources:
     requests:
       storage: 1Ti
-EOF
 ```
