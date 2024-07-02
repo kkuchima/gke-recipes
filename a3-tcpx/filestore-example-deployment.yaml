@@ -35,4 +35,4 @@ spec:
   storageClassName: sc-filestore
   resources:
     requests:
-      storage: 1Ti
+      storage: 3Ti
