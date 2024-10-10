@@ -1,0 +1,22 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-rps
+spec:
+  minReplicas: 1
+  maxReplicas: 50
+  metrics:
+  - external:
+      metric:
+       name: loadbalancing.googleapis.com|https|request_count
+       selector:
+         matchLabels:
+           resource.labels.url_map_name: k8s2-um-1oho6i0b-default-hello-ingress-1v5wy8tx
+      target:
+        type: AverageValue
+        averageValue: 1
+    type: External
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helloweb
