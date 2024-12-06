@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-gemma2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gemma2-server
+  template:
+    metadata:
+      labels:
+        app: gemma2-server
+        ai.gke.io/model: gemma-2-9b
+        ai.gke.io/inference-server: vllm
+    spec:
+      containers:
+      - name: inference-server
+        image: us-docker.pkg.dev/vertex-ai/vertex-vision-model-garden-dockers/pytorch-vllm-serve:20240910_0916_RC00
+        resources:
+          requests:
+            cpu: "12"
+            memory: "48Gi"
+            ephemeral-storage: "48Gi"
+            nvidia.com/gpu: 2
+          limits:
+            cpu: "12"
+            memory: "48Gi"
+            ephemeral-storage: "48Gi"
+            nvidia.com/gpu: 2
+        command: ["python3", "-m", "vllm.entrypoints.api_server"]
+        args:
+        - --model=$(MODEL_ID)
+        - --tensor-parallel-size=2
+        env:
+        - name: MODEL_ID
+          value: /models/gemma-2-9b
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-secret
+              key: hf_api_token
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /models
+          name: gemma-2-9b
+      volumes:
+      - name: dshm
+        emptyDir:
+            medium: Memory
+      - name: gemma-2-9b
+        persistentVolumeClaim:
+          claimName: pvc-hdml-static
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
+        cloud.google.com.node-restriction.kubernetes.io/gke-secondary-boot-disk-disk-vllm-gemma2: CONTAINER_IMAGE_CACHE.kkuchima-sandbox

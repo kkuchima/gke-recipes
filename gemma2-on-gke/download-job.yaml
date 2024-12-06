@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: download-job
+spec:
+  template:  # Template for the Pods the Job will create
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: copy
+        resources:
+          requests:
+            cpu: "8"
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "8"
+            nvidia.com/gpu: 1
+        image: huggingface/downloader:0.17.3
+        command: [ "huggingface-cli" ]
+        args:
+        - download
+        - google/gemma-2-9b
+        - --local-dir=/data/gemma-2-9b
+        - --local-dir-use-symlinks=False
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-secret
+              key: hf_api_token
+        volumeMounts:
+          - mountPath: "/data"
+            name: volume
+      volumes:
+        - name: volume
+          persistentVolumeClaim:
+            claimName: pvc-hdml
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
+  parallelism: 1         # Run 1 Pods concurrently
+  completions: 1         # Once 1 Pods complete successfully, the Job is done
+  backoffLimit: 4        # Max retries on failure

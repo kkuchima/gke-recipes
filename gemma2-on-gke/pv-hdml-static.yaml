@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-hdml-static
+spec:
+  storageClassName: hyperdisk-ml
+  capacity:
+    storage: 300Gi
+  accessModes:
+    - ReadOnlyMany
+  claimRef:
+    namespace: default
+    name: pvc-hdml-static
+  csi:
+    driver: pd.csi.storage.gke.io
+    volumeHandle: projects/kkuchima-sandbox/zones/asia-northeast1-a/disks/pvc-81996c7d-8596-41ed-a1a3-51e2613ca76d #update
+    fsType: ext4
+    readOnly: true
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.gke.io/zone
+          operator: In
+          values:
+          - asia-northeast1-a
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-hdml-static
+spec:
+  storageClassName: hyperdisk-ml
+  volumeName: pv-hdml-static
+  accessModes:
+  - ReadOnlyMany
+  resources:
+    requests:
+      storage: 300Gi

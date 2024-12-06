@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+    name: hyperdisk-ml
+parameters:
+    type: hyperdisk-ml
+provisioner: pd.csi.storage.gke.io
+allowVolumeExpansion: false
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
