@@ -1,0 +1,94 @@
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ProvisioningRequestConfig
+metadata:
+  name: dws-prov-config
+spec:
+  provisioningClassName: queued-provisioning.gke.io
+  managedResources:
+  - nvidia.com/gpu
+  retryStrategy:
+    backoffLimitCount: 3
+    backoffBaseSeconds: 60
+    backoffMaxSeconds: 600
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: AdmissionCheck
+metadata:
+  name: dws-prov-check
+spec:
+  controllerName: kueue.x-k8s.io/provisioning-request
+  parameters:
+    apiGroup: kueue.x-k8s.io
+    kind: ProvisioningRequestConfig
+    name: dws-prov-config
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: rf-dws-g4
+spec:
+  nodeLabels:
+    cloud.google.com/gke-nodepool: dws-g4-queued-pool
+  tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+  - key: cloud.google.com/gke-queued
+    operator: Exists
+    effect: NoSchedule
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: rf-dws-l4
+spec:
+  nodeLabels:
+    cloud.google.com/gke-nodepool: dws-l4-queued-pool
+  tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+  - key: cloud.google.com/gke-queued
+    operator: Exists
+    effect: NoSchedule
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: cq-dws-gpu
+spec:
+  namespaceSelector: {}
+  queueingStrategy: BestEffortFIFO
+  admissionChecksStrategy:
+    admissionChecks:
+    - name: dws-prov-check
+      onFlavors:
+      - rf-dws-g4
+      - rf-dws-l4
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: rf-dws-g4
+      resources:
+      - name: "cpu"
+        nominalQuota: 192
+      - name: "memory"
+        nominalQuota: 720Gi
+      - name: "nvidia.com/gpu"
+        nominalQuota: 4
+    - name: rf-dws-l4
+      resources:
+      - name: "cpu"
+        nominalQuota: 128
+      - name: "memory"
+        nominalQuota: 512Gi
+      - name: "nvidia.com/gpu"
+        nominalQuota: 4
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: lq-dws-gpu
+  namespace: ${k8s_namespace}
+spec:
+  clusterQueue: cq-dws-gpu

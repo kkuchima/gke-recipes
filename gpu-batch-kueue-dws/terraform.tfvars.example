@@ -1,0 +1,13 @@
+project_id       = "your-project-id"
+region           = "asia-northeast1"
+cluster_location = "asia-northeast1-b" # Regional で試す場合は "asia-northeast1"
+name_prefix      = "gpu-batch-verify"
+
+# L4 フォールバック用マシンタイプ（本番同等シェイプにする場合は "g2-standard-32"）
+l4_machine_type = "g2-standard-8"
+
+# 既存の Specific Capacity Reservation を Priority 1 でテストする場合のみ指定
+specific_g4_reservation_name = ""
+
+# terraform apply 内で Cloud Build & kubectl マニフェスト適用まで一括実行する場合は true
+auto_bootstrap_workloads = false
