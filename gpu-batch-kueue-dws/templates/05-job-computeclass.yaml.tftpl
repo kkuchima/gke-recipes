@@ -1,0 +1,86 @@
+# [パターン1: CUD/予約優先 + DWS flex-start ComputeClass 経路]
+# 連続投入時 (Cold Start vs Warm Node Reuse) も名前衝突しないよう generateName を使用:
+#   kubectl create -f generated-manifests/05-job-computeclass.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: sensor-jax-cc-
+  namespace: ${k8s_namespace}
+  labels:
+    kueue.x-k8s.io/queue-name: lq-gpu-primary
+spec:
+  suspend: true
+  parallelism: 1
+  completions: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: sensor-jax-worker
+        route: computeclass
+      annotations:
+        gke-gcsfuse/volumes: "true"
+        gke-gcsfuse/cpu-limit: "2"
+        gke-gcsfuse/memory-limit: "4Gi"
+        gke-gcsfuse/ephemeral-storage-limit: "10Gi"
+    spec:
+      serviceAccountName: ${k8s_service_account}
+      restartPolicy: Never
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: jax-worker
+        image: ${jax_image_uri}
+        env:
+        - name: PATH
+          value: "/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/nvidia/lib64"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: JOB_RUN_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: XLA_CLIENT_MEM_FRACTION
+          value: "0.75"
+        - name: GCS_INPUT_DIR
+          value: "/gcs/input"
+        - name: GCS_OUTPUT_DIR
+          value: "/gcs/output"
+        - name: INSTRUMENTATION_DIR
+          value: "/instrumentation"
+        - name: AWS_WEB_IDENTITY_TOKEN_FILE
+          value: "/var/run/secrets/aws-oidc/token"
+        resources:
+          requests:
+            cpu: "4"
+            memory: "16Gi"
+            nvidia.com/gpu: "1"
+          limits:
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: gcs-vol
+          mountPath: /gcs
+        - name: inst-vol
+          mountPath: /instrumentation
+        - name: aws-oidc-vol
+          mountPath: /var/run/secrets/aws-oidc
+          readOnly: true
+      volumes:
+      - name: gcs-vol
+        persistentVolumeClaim:
+          claimName: gcs-batch-pvc
+      - name: inst-vol
+        emptyDir: {}
+      - name: aws-oidc-vol
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+              audience: sts.amazonaws.com
+              expirationSeconds: 3600

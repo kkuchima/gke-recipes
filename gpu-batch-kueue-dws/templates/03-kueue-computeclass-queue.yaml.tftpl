@@ -1,0 +1,38 @@
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: rf-gpu-primary
+spec:
+  nodeLabels:
+    cloud.google.com/compute-class: gpu-batch-primary
+  tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: cq-gpu-primary
+spec:
+  namespaceSelector: {}
+  queueingStrategy: BestEffortFIFO
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: rf-gpu-primary
+      resources:
+      - name: "cpu"
+        nominalQuota: 768
+      - name: "memory"
+        nominalQuota: 3072Gi
+      - name: "nvidia.com/gpu"
+        nominalQuota: 16
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: lq-gpu-primary
+  namespace: ${k8s_namespace}
+spec:
+  clusterQueue: cq-gpu-primary
